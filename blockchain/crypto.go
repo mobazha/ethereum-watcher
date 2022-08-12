@@ -5,7 +5,7 @@ import (
 	"crypto/elliptic"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec"
-	"gitlab.com/eth-stack/ethereum-watcher/utils"
+	"github.com/eth-stack/ethereum-watcher/utils"
 	"golang.org/x/crypto/sha3"
 )
 

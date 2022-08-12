@@ -1,6 +1,6 @@
 # ethereum-watcher
 
-![](https://gitlab.com/eth-stack/ethereum-watcher/workflows/Go/badge.svg)
+![](https://github.com/eth-stack/ethereum-watcher/workflows/Go/badge.svg)
 
 ethereum-watcher is an event listener for the [Ethereum Blockchain](https://ethereum.org/) written in Golang. With ethereum-watcher you can monitor and track current or historic events that occur on the Ethereum Blockchain.
 
@@ -23,7 +23,7 @@ Many applications that interact with the Ethereum Blockchain need to know when s
 
 # Installation
 
-Run `go get gitlab.com/eth-stack/ethereum-watcher`
+Run `go get github.com/eth-stack/ethereum-watcher`
 
 ## Sample Commands
 
@@ -147,8 +147,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"gitlab.com/eth-stack/ethereum-watcher/plugin"
-	"gitlab.com/eth-stack/ethereum-watcher/structs"
+	"github.com/eth-stack/ethereum-watcher/plugin"
+	"github.com/eth-stack/ethereum-watcher/structs"
 )
 
 func main() {
@@ -172,8 +172,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"gitlab.com/eth-stack/ethereum-watcher/plugin"
-	"gitlab.com/eth-stack/ethereum-watcher/structs"
+	"github.com/eth-stack/ethereum-watcher/plugin"
+	"github.com/eth-stack/ethereum-watcher/structs"
 	"github.com/sirupsen/logrus"
 )
 
@@ -209,7 +209,7 @@ package main
 
 import (
 	"context"
-	"gitlab.com/eth-stack/ethereum-watcher/blockchain"
+	"github.com/eth-stack/ethereum-watcher/blockchain"
 	"github.com/sirupsen/logrus"
 )
 

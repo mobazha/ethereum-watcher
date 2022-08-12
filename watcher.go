@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/eth-stack/ethereum-watcher/plugin"
+	"github.com/eth-stack/ethereum-watcher/rpc"
+	"github.com/eth-stack/ethereum-watcher/structs"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/sirupsen/logrus"
-	"gitlab.com/eth-stack/ethereum-watcher/plugin"
-	"gitlab.com/eth-stack/ethereum-watcher/rpc"
-	"gitlab.com/eth-stack/ethereum-watcher/structs"
 
-	"gitlab.com/eth-stack/ethereum-watcher/pkg/container/list"
+	"github.com/eth-stack/ethereum-watcher/pkg/container/list"
 )
 
 type AbstractWatcher struct {

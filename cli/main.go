@@ -6,13 +6,13 @@ import (
 	"os"
 	"os/signal"
 
+	ethereum_watcher "github.com/eth-stack/ethereum-watcher"
+	"github.com/eth-stack/ethereum-watcher/plugin"
+	"github.com/eth-stack/ethereum-watcher/rpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	ethereum_watcher "gitlab.com/eth-stack/ethereum-watcher"
-	"gitlab.com/eth-stack/ethereum-watcher/plugin"
-	"gitlab.com/eth-stack/ethereum-watcher/rpc"
 )
 
 const (

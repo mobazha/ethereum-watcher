@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/eth-stack/ethereum-watcher/plugin"
+	"github.com/eth-stack/ethereum-watcher/structs"
 	"github.com/sirupsen/logrus"
-	"gitlab.com/eth-stack/ethereum-watcher/plugin"
-	"gitlab.com/eth-stack/ethereum-watcher/structs"
 )
 
 func TestNewBlockNumPlugin(t *testing.T) {

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/eth-stack/ethereum-watcher/plugin"
+	"github.com/eth-stack/ethereum-watcher/structs"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
-	"gitlab.com/eth-stack/ethereum-watcher/plugin"
-	"gitlab.com/eth-stack/ethereum-watcher/structs"
 )
 
 // todo why some tx index in block is zero?

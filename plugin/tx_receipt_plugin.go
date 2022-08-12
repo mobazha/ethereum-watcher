@@ -1,8 +1,8 @@
 package plugin
 
 import (
+	"github.com/eth-stack/ethereum-watcher/structs"
 	"github.com/ethereum/go-ethereum/core/types"
-	"gitlab.com/eth-stack/ethereum-watcher/structs"
 )
 
 type ITxReceiptPlugin interface {

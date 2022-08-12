@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/eth-stack/ethereum-watcher/rpc"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/sirupsen/logrus"
-	"gitlab.com/eth-stack/ethereum-watcher/rpc"
 )
 
 type ReceiptLogWatcher struct {

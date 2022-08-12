@@ -1,7 +1,7 @@
 package plugin
 
 import (
-	"gitlab.com/eth-stack/ethereum-watcher/structs"
+	"github.com/eth-stack/ethereum-watcher/structs"
 )
 
 type IBlockPlugin interface {
