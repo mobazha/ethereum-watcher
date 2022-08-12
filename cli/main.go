@@ -3,14 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/HydroProtocol/ethereum-watcher"
-	"github.com/HydroProtocol/ethereum-watcher/blockchain"
-	"github.com/HydroProtocol/ethereum-watcher/plugin"
-	"github.com/HydroProtocol/ethereum-watcher/rpc"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	ethereum_watcher "gitlab.com/eth-stack/ethereum-watcher"
+	"gitlab.com/eth-stack/ethereum-watcher/plugin"
+	"gitlab.com/eth-stack/ethereum-watcher/rpc"
 )
 
 const (
@@ -52,7 +54,10 @@ var blockNumCMD = &cobra.Command{
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt)
 
-		w := ethereum_watcher.NewHttpBasedEthWatcher(ctx, api)
+		w, err := ethereum_watcher.NewHttpBasedEthWatcher(ctx, api)
+		if err != nil {
+			logrus.Panicln(err)
+		}
 
 		logrus.Println("waiting for new block...")
 		w.RegisterBlockPlugin(plugin.NewBlockNumPlugin(func(i uint64, b bool) {
@@ -64,7 +69,7 @@ var blockNumCMD = &cobra.Command{
 			cancel()
 		}()
 
-		err := w.RunTillExit()
+		err = w.RunTillExit()
 		if err != nil {
 			logrus.Printf("exit with err: %s", err)
 		} else {
@@ -77,12 +82,12 @@ var usdtTransferCMD = &cobra.Command{
 	Use:   "usdt-transfer",
 	Short: "Show Transfer Event of USDT",
 	Run: func(cmd *cobra.Command, args []string) {
-		usdtContractAdx := "0xdac17f958d2ee523a2206206994597c13d831ec7"
+		usdtContractAdx := common.HexToAddress("0xdac17f958d2ee523a2206206994597c13d831ec7")
 
 		// Transfer
-		topicsInterestedIn := []string{"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"}
+		topicsInterestedIn := []common.Hash{common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")}
 
-		handler := func(from, to int, receiptLogs []blockchain.IReceiptLog, isUpToHighestBlock bool) error {
+		handler := func(from, to int, receiptLogs []types.Log, isUpToHighestBlock bool) error {
 
 			if from != to {
 				logrus.Infof("See new USDT Transfer at blockRange: %d -> %d, count: %2d", from, to, len(receiptLogs))
@@ -91,7 +96,7 @@ var usdtTransferCMD = &cobra.Command{
 			}
 
 			for _, log := range receiptLogs {
-				logrus.Infof("  >> tx: https://etherscan.io/tx/%s", log.GetTransactionHash())
+				logrus.Infof("  >> tx: https://etherscan.io/tx/%s", log.TxHash)
 			}
 
 			fmt.Println("  ")
@@ -103,7 +108,7 @@ var usdtTransferCMD = &cobra.Command{
 			context.TODO(),
 			api,
 			-1,
-			usdtContractAdx,
+			[]common.Address{usdtContractAdx},
 			topicsInterestedIn,
 			handler,
 			ethereum_watcher.ReceiptLogWatcherConfig{
@@ -130,7 +135,7 @@ var contractEventListenerCMD = &cobra.Command{
     --events 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		handler := func(from, to int, receiptLogs []blockchain.IReceiptLog, isUpToHighestBlock bool) error {
+		handler := func(from, to int, receiptLogs []types.Log, isUpToHighestBlock bool) error {
 
 			if from != to {
 				logrus.Infof("# of interested events at block(%d->%d): %d", from, to, len(receiptLogs))
@@ -139,7 +144,7 @@ var contractEventListenerCMD = &cobra.Command{
 			}
 
 			for _, log := range receiptLogs {
-				logrus.Infof("  >> tx: https://etherscan.io/tx/%s", log.GetTransactionHash())
+				logrus.Infof("  >> tx: https://etherscan.io/tx/%s", log.TxHash)
 			}
 
 			fmt.Println("  ")
@@ -149,8 +154,12 @@ var contractEventListenerCMD = &cobra.Command{
 
 		startBlockNum := -1
 		if blockBackoff > 0 {
-			rpc := rpc.NewEthRPCWithRetry(api, 3)
-			curBlockNum, err := rpc.GetCurrentBlockNum()
+			rpc, err := rpc.NewEthRPCWithRetry(api, 3)
+			if err != nil {
+				logrus.Panicln("RPC error", err)
+			}
+
+			curBlockNum, err := rpc.BlockNumber(context.Background())
 			if err == nil {
 				startBlockNum = int(curBlockNum) - blockBackoff
 
@@ -161,12 +170,17 @@ var contractEventListenerCMD = &cobra.Command{
 			}
 		}
 
+		topics := []common.Hash{}
+		for _, topic := range eventSigs {
+			topics = append(topics, common.HexToHash(topic))
+		}
+
 		receiptLogWatcher := ethereum_watcher.NewReceiptLogWatcher(
 			context.TODO(),
 			api,
 			startBlockNum,
-			contractAdx,
-			eventSigs,
+			[]common.Address{common.HexToAddress(contractAdx)},
+			topics,
 			handler,
 			ethereum_watcher.ReceiptLogWatcherConfig{
 				StepSizeForBigLag:               5,

@@ -1,7 +1,8 @@
 package plugin
 
 import (
-	"github.com/HydroProtocol/ethereum-watcher/structs"
+	"github.com/ethereum/go-ethereum/common"
+	"gitlab.com/eth-stack/ethereum-watcher/structs"
 )
 
 type ITxPlugin interface {
@@ -9,16 +10,16 @@ type ITxPlugin interface {
 }
 
 type TxHashPlugin struct {
-	callback func(txHash string, isRemoved bool)
+	callback func(txHash common.Hash, isRemoved bool)
 }
 
 func (p TxHashPlugin) AcceptTx(transaction structs.RemovableTx) {
 	if p.callback != nil {
-		p.callback(transaction.GetHash(), transaction.IsRemoved)
+		p.callback(transaction.Hash(), transaction.IsRemoved)
 	}
 }
 
-func NewTxHashPlugin(callback func(txHash string, isRemoved bool)) TxHashPlugin {
+func NewTxHashPlugin(callback func(txHash common.Hash, isRemoved bool)) TxHashPlugin {
 	return TxHashPlugin{
 		callback: callback,
 	}

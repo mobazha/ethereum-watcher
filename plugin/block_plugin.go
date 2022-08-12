@@ -1,7 +1,7 @@
 package plugin
 
 import (
-	"github.com/HydroProtocol/ethereum-watcher/structs"
+	"gitlab.com/eth-stack/ethereum-watcher/structs"
 )
 
 type IBlockPlugin interface {
@@ -14,7 +14,7 @@ type BlockNumPlugin struct {
 
 func (p BlockNumPlugin) AcceptBlock(b *structs.RemovableBlock) {
 	if p.callback != nil {
-		p.callback(b.Number(), b.IsRemoved)
+		p.callback(b.NumberU64(), b.IsRemoved)
 	}
 }
 

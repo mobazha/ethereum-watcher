@@ -1,15 +1,18 @@
 package rpc
 
 import (
-	"github.com/HydroProtocol/ethereum-watcher/blockchain"
+	"context"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type IBlockChainRPC interface {
-	GetCurrentBlockNum() (uint64, error)
-
-	GetBlockByNum(uint64) (blockchain.Block, error)
-	GetLiteBlockByNum(uint64) (blockchain.Block, error)
-	GetTransactionReceipt(txHash string) (blockchain.TransactionReceipt, error)
-
-	GetLogs(from, to uint64, address string, topics []string) ([]blockchain.IReceiptLog, error)
+	BlockNumber(ctx context.Context) (uint64, error)
+	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
+	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
+	FilterLogs(ctx context.Context, query ethereum.FilterQuery) ([]types.Log, error)
 }

@@ -3,13 +3,13 @@ package ethereum_watcher
 import (
 	"context"
 	"fmt"
-	"github.com/HydroProtocol/ethereum-watcher/blockchain"
-	"github.com/HydroProtocol/ethereum-watcher/plugin"
-	"github.com/HydroProtocol/ethereum-watcher/structs"
-	"github.com/labstack/gommon/log"
-	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/labstack/gommon/log"
+	"github.com/sirupsen/logrus"
+	"gitlab.com/eth-stack/ethereum-watcher/plugin"
+	"gitlab.com/eth-stack/ethereum-watcher/structs"
 )
 
 // todo why some tx index in block is zero?
@@ -17,53 +17,44 @@ func TestTxReceiptPlugin(t *testing.T) {
 	log.SetLevel(log.DEBUG)
 
 	api := "https://mainnet.infura.io/v3/19d753b2600445e292d54b1ef58d4df4"
-	w := NewHttpBasedEthWatcher(context.Background(), api)
+	w, err := NewHttpBasedEthWatcher(context.Background(), api)
+	if err != nil {
+		logrus.Panicln("RPC error:", err)
+	}
 
 	w.RegisterTxReceiptPlugin(plugin.NewTxReceiptPlugin(func(txAndReceipt *structs.RemovableTxAndReceipt) {
 		if txAndReceipt.IsRemoved {
-			fmt.Println("Removed >>", txAndReceipt.Tx.GetHash(), txAndReceipt.Receipt.GetTxIndex())
+			fmt.Println("Removed >>", txAndReceipt.Tx.Hash(), txAndReceipt.Receipt.TransactionIndex)
 		} else {
-			fmt.Println("Adding >>", txAndReceipt.Tx.GetHash(), txAndReceipt.Receipt.GetTxIndex())
+			fmt.Println("Adding >>", txAndReceipt.Tx.Hash(), txAndReceipt.Receipt.TransactionIndex)
 		}
 	}))
 
 	w.RunTillExit()
 }
 
-func TestErc20TransferPlugin(t *testing.T) {
-	api := "https://mainnet.infura.io/v3/19d753b2600445e292d54b1ef58d4df4"
-	w := NewHttpBasedEthWatcher(context.Background(), api)
-
-	w.RegisterTxReceiptPlugin(plugin.NewERC20TransferPlugin(
-		func(token, from, to string, amount decimal.Decimal, isRemove bool) {
-
-			logrus.Infof("New ERC20 Transfer >> token(%s), %s -> %s, amount: %s, isRemoved: %t",
-				token, from, to, amount, isRemove)
-
-		},
-	))
-
-	w.RunTillExit()
-}
-
 func TestFilterPlugin(t *testing.T) {
 	api := "https://mainnet.infura.io/v3/19d753b2600445e292d54b1ef58d4df4"
-	w := NewHttpBasedEthWatcher(context.Background(), api)
+	w, err := NewHttpBasedEthWatcher(context.Background(), api)
+
+	if err != nil {
+		logrus.Panicln("RPC error:", err)
+	}
 
 	callback := func(txAndReceipt *structs.RemovableTxAndReceipt) {
-		fmt.Println("tx:", txAndReceipt.Tx.GetHash())
+		fmt.Println("tx:", txAndReceipt.Tx.Hash())
 	}
 
 	// only accept txs which end with: f
-	filterFunc := func(tx blockchain.Transaction) bool {
-		txHash := tx.GetHash()
+	filterFunc := func(tx *types.Transaction) bool {
+		txHash := tx.Hash().Hex()
 
 		return txHash[len(txHash)-1:] == "f"
 	}
 
 	w.RegisterTxReceiptPlugin(plugin.NewTxReceiptPluginWithFilter(callback, filterFunc))
 
-	err := w.RunTillExitFromBlock(7840000)
+	err = w.RunTillExitFromBlock(7840000)
 	if err != nil {
 		fmt.Println("RunTillExit with err:", err)
 	}
@@ -71,29 +62,33 @@ func TestFilterPlugin(t *testing.T) {
 
 func TestFilterPluginForDyDxApprove(t *testing.T) {
 	api := "https://mainnet.infura.io/v3/19d753b2600445e292d54b1ef58d4df4"
-	w := NewHttpBasedEthWatcher(context.Background(), api)
+	w, err := NewHttpBasedEthWatcher(context.Background(), api)
+
+	if err != nil {
+		logrus.Panicln("RPC error:", err)
+	}
 
 	callback := func(txAndReceipt *structs.RemovableTxAndReceipt) {
 		receipt := txAndReceipt.Receipt
 
-		for _, log := range receipt.GetLogs() {
-			topics := log.GetTopics()
+		for _, log := range receipt.Logs {
+			topics := log.Topics
 			if len(topics) == 3 &&
-				topics[0] == "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925" &&
-				topics[2] == "0x0000000000000000000000001e0447b19bb6ecfdae1e4ae1694b0c3659614e4e" {
-				fmt.Printf(">> approving to dydx, tx: %s\n", txAndReceipt.Tx.GetHash())
+				topics[0].Hex() == "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925" &&
+				topics[2].Hex() == "0x0000000000000000000000001e0447b19bb6ecfdae1e4ae1694b0c3659614e4e" {
+				fmt.Printf(">> approving to dydx, tx: %s\n", txAndReceipt.Tx.Hash())
 			}
 		}
 	}
 
 	// only accept txs which send to DAI
-	filterFunc := func(tx blockchain.Transaction) bool {
-		return tx.GetTo() == "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
+	filterFunc := func(tx *types.Transaction) bool {
+		return tx.To().Hex() == "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359"
 	}
 
 	w.RegisterTxReceiptPlugin(plugin.NewTxReceiptPluginWithFilter(callback, filterFunc))
 
-	err := w.RunTillExitFromBlock(7844853)
+	err = w.RunTillExitFromBlock(7844853)
 	if err != nil {
 		fmt.Println("RunTillExit with err:", err)
 	}

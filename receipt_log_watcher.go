@@ -3,20 +3,24 @@ package ethereum_watcher
 import (
 	"context"
 	"fmt"
-	"github.com/HydroProtocol/ethereum-watcher/blockchain"
-	"github.com/HydroProtocol/ethereum-watcher/rpc"
-	"github.com/sirupsen/logrus"
+	"math/big"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/sirupsen/logrus"
+	"gitlab.com/eth-stack/ethereum-watcher/rpc"
 )
 
 type ReceiptLogWatcher struct {
 	ctx                   context.Context
 	api                   string
 	startBlockNum         int
-	contract              string
-	interestedTopics      []string
-	handler               func(from, to int, receiptLogs []blockchain.IReceiptLog, isUpToHighestBlock bool) error
+	contracts             []common.Address
+	interestedTopics      []common.Hash
+	handler               func(from, to int, receiptLogs []types.Log, isUpToHighestBlock bool) error
 	config                ReceiptLogWatcherConfig
 	highestSyncedBlockNum int
 	highestSyncedLogIndex int
@@ -26,9 +30,9 @@ func NewReceiptLogWatcher(
 	ctx context.Context,
 	api string,
 	startBlockNum int,
-	contract string,
-	interestedTopics []string,
-	handler func(from, to int, receiptLogs []blockchain.IReceiptLog, isUpToHighestBlock bool) error,
+	contracts []common.Address,
+	interestedTopics []common.Hash,
+	handler func(from, to int, receiptLogs []types.Log, isUpToHighestBlock bool) error,
 	configs ...ReceiptLogWatcherConfig,
 ) *ReceiptLogWatcher {
 
@@ -40,7 +44,7 @@ func NewReceiptLogWatcher(
 		ctx:                   ctx,
 		api:                   api,
 		startBlockNum:         startBlockNum,
-		contract:              contract,
+		contracts:             contracts,
 		interestedTopics:      interestedTopics,
 		handler:               handler,
 		config:                config,
@@ -94,14 +98,17 @@ func (w *ReceiptLogWatcher) Run() error {
 
 	var blockNumToBeProcessedNext = w.startBlockNum
 
-	rpc := rpc.NewEthRPCWithRetry(w.api, w.config.RPCMaxRetry)
+	rpc, err := rpc.NewEthRPCWithRetry(w.api, w.config.RPCMaxRetry)
+	if err != nil {
+		return err
+	}
 
 	for {
 		select {
 		case <-w.ctx.Done():
 			return nil
 		default:
-			highestBlock, err := rpc.GetCurrentBlockNum()
+			highestBlock, err := rpc.BlockNumber(w.ctx)
 			if err != nil {
 				return err
 			}
@@ -136,7 +143,16 @@ func (w *ReceiptLogWatcher) Run() error {
 				to = highestBlockCanProcess
 			}
 
-			logs, err := rpc.GetLogs(uint64(blockNumToBeProcessedNext), uint64(to), w.contract, w.interestedTopics)
+			logs, err := rpc.FilterLogs(
+				w.ctx,
+				ethereum.FilterQuery{
+					FromBlock: big.NewInt(int64(blockNumToBeProcessedNext)),
+					ToBlock:   big.NewInt(int64(to)),
+					Addresses: w.contracts,
+					Topics:    [][]common.Hash{w.interestedTopics},
+				},
+			)
+
 			if err != nil {
 				return err
 			}
