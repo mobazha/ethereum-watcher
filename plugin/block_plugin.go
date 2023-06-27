@@ -1,7 +1,7 @@
 package plugin
 
 import (
-	"github.com/eth-stack/ethereum-watcher/structs"
+	"github.com/mobazha/ethereum-watcher/structs"
 )
 
 type IBlockPlugin interface {
@@ -24,7 +24,7 @@ func NewBlockNumPlugin(callback func(uint64, bool)) BlockNumPlugin {
 	}
 }
 
-//provide block info with tx basic infos
+// provide block info with tx basic infos
 type SimpleBlockPlugin struct {
 	callback func(block *structs.RemovableBlock)
 }

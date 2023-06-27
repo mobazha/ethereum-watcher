@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/eth-stack/ethereum-watcher/plugin"
-	"github.com/eth-stack/ethereum-watcher/structs"
+	"github.com/mobazha/ethereum-watcher/plugin"
+	"github.com/mobazha/ethereum-watcher/structs"
 	"github.com/sirupsen/logrus"
 )
 

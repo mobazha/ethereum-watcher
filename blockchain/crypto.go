@@ -7,7 +7,7 @@ import (
 
 	btcec "github.com/btcsuite/btcd/btcec/v2"
 	btcecEcdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
-	"github.com/eth-stack/ethereum-watcher/utils"
+	"github.com/mobazha/ethereum-watcher/utils"
 	"golang.org/x/crypto/sha3"
 )
 

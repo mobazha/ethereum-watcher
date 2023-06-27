@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eth-stack/ethereum-watcher/rpc"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/mobazha/ethereum-watcher/rpc"
 	"github.com/sirupsen/logrus"
 )
 

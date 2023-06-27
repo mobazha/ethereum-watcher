@@ -1,4 +1,4 @@
-module github.com/eth-stack/ethereum-watcher
+module github.com/mobazha/ethereum-watcher
 
 go 1.18
 

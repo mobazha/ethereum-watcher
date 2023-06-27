@@ -6,11 +6,11 @@ import (
 	"os"
 	"os/signal"
 
-	ethereum_watcher "github.com/eth-stack/ethereum-watcher"
-	"github.com/eth-stack/ethereum-watcher/plugin"
-	"github.com/eth-stack/ethereum-watcher/rpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	ethereum_watcher "github.com/mobazha/ethereum-watcher"
+	"github.com/mobazha/ethereum-watcher/plugin"
+	"github.com/mobazha/ethereum-watcher/rpc"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
