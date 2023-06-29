@@ -15,11 +15,23 @@ import (
 )
 
 type ReceiptLogWatcher struct {
-	ctx                   context.Context
-	api                   string
-	startBlockNum         int
-	contracts             []common.Address
-	interestedTopics      []common.Hash
+	ctx           context.Context
+	api           string
+	startBlockNum int
+	contracts     []common.Address
+
+	// The Topic list restricts matches to particular event topics. Each event has a list
+	// of topics. Topics matches a prefix of that list. An empty element slice matches any
+	// topic. Non-empty elements represent an alternative that matches any of the
+	// contained topics.
+	//
+	// Examples:
+	// {} or nil          matches any topic list
+	// {{A}}              matches topic A in first position
+	// {{}, {B}}          matches any topic in first position AND B in second position
+	// {{A}, {B}}         matches topic A in first position AND B in second position
+	// {{A, B}, {C, D}}   matches topic (A OR B) in first position AND (C OR D) in second position
+	interestedTopics      [][]common.Hash
 	handler               func(from, to int, receiptLogs []types.Log, isUpToHighestBlock bool) error
 	config                ReceiptLogWatcherConfig
 	highestSyncedBlockNum int
@@ -31,7 +43,7 @@ func NewReceiptLogWatcher(
 	api string,
 	startBlockNum int,
 	contracts []common.Address,
-	interestedTopics []common.Hash,
+	interestedTopics [][]common.Hash,
 	handler func(from, to int, receiptLogs []types.Log, isUpToHighestBlock bool) error,
 	configs ...ReceiptLogWatcherConfig,
 ) *ReceiptLogWatcher {
@@ -149,7 +161,7 @@ func (w *ReceiptLogWatcher) Run() error {
 					FromBlock: big.NewInt(int64(blockNumToBeProcessedNext)),
 					ToBlock:   big.NewInt(int64(to)),
 					Addresses: w.contracts,
-					Topics:    [][]common.Hash{w.interestedTopics},
+					Topics:    w.interestedTopics,
 				},
 			)
 
