@@ -9,6 +9,7 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
+	github.com/wk8/go-ordered-map v1.0.0
 	golang.org/x/crypto v0.10.0
 )
 

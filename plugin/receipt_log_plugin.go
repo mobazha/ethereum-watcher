@@ -1,8 +1,11 @@
 package plugin
 
 import (
+	"sync"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mobazha/ethereum-watcher/structs"
+	orderedmap "github.com/wk8/go-ordered-map"
 )
 
 type IReceiptLogPlugin interface {
@@ -16,6 +19,7 @@ type ReceiptLogPlugin struct {
 	contracts []common.Address
 	topics    [][]common.Hash
 	callback  func(receiptLog *structs.RemovableReceiptLog)
+	topicsMtx sync.Mutex
 }
 
 func NewReceiptLogPlugin(
@@ -36,6 +40,59 @@ func (p *ReceiptLogPlugin) FromContracts() []common.Address {
 
 func (p *ReceiptLogPlugin) InterestedTopics() [][]common.Hash {
 	return p.topics
+}
+
+// AddInterestedTopics add more topics to match indexed topic in given position (0 based)
+func (p *ReceiptLogPlugin) AddInterestedTopics(position int, topics []common.Hash) {
+	p.topicsMtx.Lock()
+	defer p.topicsMtx.Unlock()
+
+	if len(p.topics) < position {
+		for pos := len(p.topics); pos < position; pos++ {
+			p.topics = append(p.topics, []common.Hash{})
+		}
+	}
+
+	draftTopics := append(p.topics[position], topics...)
+
+	om := orderedmap.New()
+	for _, topic := range draftTopics {
+		om.Set(topic, true)
+	}
+
+	newTopics := []common.Hash{}
+	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
+		newTopics = append(newTopics, (pair.Key).(common.Hash))
+	}
+
+	p.topics[position] = newTopics
+}
+
+// RemoveInterestedTopics remove topics to match indexed topic in given position (0 based)
+func (p *ReceiptLogPlugin) RemoveInterestedTopics(position int, topics []common.Hash) {
+	p.topicsMtx.Lock()
+	defer p.topicsMtx.Unlock()
+
+	if len(p.topics) < position {
+		return
+	}
+
+	om := orderedmap.New()
+	for _, topic := range p.topics[position] {
+		om.Set(topic, true)
+	}
+	for _, topic := range topics {
+		om.Set(topic, false)
+	}
+
+	newTopics := []common.Hash{}
+	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
+		if (pair.Value).(bool) {
+			newTopics = append(newTopics, (pair.Key).(common.Hash))
+		}
+	}
+
+	p.topics[position] = newTopics
 }
 
 func (p *ReceiptLogPlugin) Accept(receiptLog *structs.RemovableReceiptLog) {
