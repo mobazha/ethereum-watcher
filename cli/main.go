@@ -109,7 +109,7 @@ var usdtTransferCMD = &cobra.Command{
 			api,
 			-1,
 			[]common.Address{usdtContractAdx},
-			topicsInterestedIn,
+			[][]common.Hash{topicsInterestedIn},
 			handler,
 			ethereum_watcher.ReceiptLogWatcherConfig{
 				StepSizeForBigLag:               5,
@@ -180,7 +180,7 @@ var contractEventListenerCMD = &cobra.Command{
 			api,
 			startBlockNum,
 			[]common.Address{common.HexToAddress(contractAdx)},
-			topics,
+			[][]common.Hash{topics},
 			handler,
 			ethereum_watcher.ReceiptLogWatcherConfig{
 				StepSizeForBigLag:               5,

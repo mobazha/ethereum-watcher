@@ -393,13 +393,13 @@ func (watcher *AbstractWatcher) addNewBlock(block *structs.RemovableBlock, curHi
 	return nil
 }
 
-func (watcher *AbstractWatcher) fetchReceiptLogs(isRemoved bool, block *structs.RemovableBlock, from, to *big.Int, addresses []common.Address, topics []common.Hash) error {
+func (watcher *AbstractWatcher) fetchReceiptLogs(isRemoved bool, block *structs.RemovableBlock, from, to *big.Int, addresses []common.Address, topics [][]common.Hash) error {
 
 	receiptLogs, err := watcher.rpc.FilterLogs(watcher.Ctx, ethereum.FilterQuery{
 		FromBlock: from,
 		ToBlock:   to,
 		Addresses: addresses,
-		Topics:    [][]common.Hash{topics},
+		Topics:    topics,
 	})
 	if err != nil {
 		return err

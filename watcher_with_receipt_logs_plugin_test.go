@@ -29,7 +29,7 @@ func TestReceiptLogsPlugin(t *testing.T) {
 	}
 
 	contract := common.HexToAddress("0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee")
-	topics := []common.Hash{common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")}
+	topics := [][]common.Hash{{common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")}}
 
 	ierc20Balance := `[{ "type" : "event", "name" : "Balance", "inputs": [{ "name" : "in", "type": "uint256" }] },
 			{ "type" : "event", "name" : "Check", "inputs": [{ "name" : "t", "type": "address" }, { "name": "b", "type": "uint256" }] },
