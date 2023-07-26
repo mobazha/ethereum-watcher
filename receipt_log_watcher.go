@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/mobazha/ethereum-watcher/rpc"
 	"github.com/sirupsen/logrus"
+	orderedmap "github.com/wk8/go-ordered-map"
 )
 
 type ReceiptLogWatcher struct {
@@ -20,6 +21,7 @@ type ReceiptLogWatcher struct {
 	startBlockNum int
 	contracts     []common.Address
 
+	topicsMtx sync.Mutex
 	// The Topic list restricts matches to particular event topics. Each event has a list
 	// of topics. Topics matches a prefix of that list. An empty element slice matches any
 	// topic. Non-empty elements represent an alternative that matches any of the
@@ -36,6 +38,8 @@ type ReceiptLogWatcher struct {
 	config                ReceiptLogWatcherConfig
 	highestSyncedBlockNum int
 	highestSyncedLogIndex int
+
+	isRunning bool
 }
 
 func NewReceiptLogWatcher(
@@ -106,7 +110,67 @@ var defaultConfig = ReceiptLogWatcherConfig{
 	StartSyncAfterLogIndex:          0,
 }
 
+// AddInterestedTopics add more topics to match indexed topic in given position (0 based)
+func (w *ReceiptLogWatcher) AddInterestedTopics(contracts []common.Address, position int, topics []common.Hash) {
+	w.topicsMtx.Lock()
+	defer w.topicsMtx.Unlock()
+
+	w.contracts = append(w.contracts, contracts...)
+
+	if len(w.interestedTopics) < position {
+		for pos := len(w.interestedTopics); pos < position+1; pos++ {
+			w.interestedTopics = append(w.interestedTopics, []common.Hash{})
+		}
+	}
+
+	draftTopics := append(w.interestedTopics[position], topics...)
+
+	om := orderedmap.New()
+	for _, topic := range draftTopics {
+		om.Set(topic, true)
+	}
+
+	newTopics := []common.Hash{}
+	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
+		newTopics = append(newTopics, (pair.Key).(common.Hash))
+	}
+
+	w.interestedTopics[position] = newTopics
+}
+
+// RemoveInterestedTopics remove topics to match indexed topic in given position (0 based)
+func (w *ReceiptLogWatcher) RemoveInterestedTopics(position int, topics []common.Hash) {
+	w.topicsMtx.Lock()
+	defer w.topicsMtx.Unlock()
+
+	if len(w.interestedTopics) < position {
+		return
+	}
+
+	om := orderedmap.New()
+	for _, topic := range w.interestedTopics[position] {
+		om.Set(topic, true)
+	}
+	for _, topic := range topics {
+		om.Set(topic, false)
+	}
+
+	newTopics := []common.Hash{}
+	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
+		if (pair.Value).(bool) {
+			newTopics = append(newTopics, (pair.Key).(common.Hash))
+		}
+	}
+
+	w.interestedTopics[position] = newTopics
+}
+
+func (w *ReceiptLogWatcher) IsRunning() bool {
+	return w.isRunning
+}
+
 func (w *ReceiptLogWatcher) Run() error {
+	w.isRunning = true
 
 	var blockNumToBeProcessedNext = w.startBlockNum
 
@@ -118,6 +182,7 @@ func (w *ReceiptLogWatcher) Run() error {
 	for {
 		select {
 		case <-w.ctx.Done():
+			w.isRunning = false
 			return nil
 		default:
 			highestBlock, err := rpc.BlockNumber(w.ctx)
