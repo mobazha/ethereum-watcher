@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/mobazha/ethereum-watcher/rpc"
 	"github.com/sirupsen/logrus"
-	orderedmap "github.com/wk8/go-ordered-map"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 type ReceiptLogWatcher struct {
@@ -125,14 +125,14 @@ func (w *ReceiptLogWatcher) AddInterestedTopics(contracts []common.Address, posi
 
 	draftTopics := append(w.interestedTopics[position], topics...)
 
-	om := orderedmap.New()
+	om := orderedmap.New[common.Hash, bool]()
 	for _, topic := range draftTopics {
 		om.Set(topic, true)
 	}
 
 	newTopics := []common.Hash{}
 	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
-		newTopics = append(newTopics, (pair.Key).(common.Hash))
+		newTopics = append(newTopics, pair.Key)
 	}
 
 	w.interestedTopics[position] = newTopics
@@ -147,7 +147,7 @@ func (w *ReceiptLogWatcher) RemoveInterestedTopics(position int, topics []common
 		return
 	}
 
-	om := orderedmap.New()
+	om := orderedmap.New[common.Hash, bool]()
 	for _, topic := range w.interestedTopics[position] {
 		om.Set(topic, true)
 	}
@@ -157,8 +157,8 @@ func (w *ReceiptLogWatcher) RemoveInterestedTopics(position int, topics []common
 
 	newTopics := []common.Hash{}
 	for pair := om.Oldest(); pair != nil; pair = pair.Next() {
-		if (pair.Value).(bool) {
-			newTopics = append(newTopics, (pair.Key).(common.Hash))
+		if pair.Value {
+			newTopics = append(newTopics, pair.Key)
 		}
 	}
 
