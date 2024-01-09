@@ -51,6 +51,19 @@ func (rpc EthBlockChainRPCWithRetry) HeaderByNumber(ctx context.Context, number 
 	return
 }
 
+func (rpc EthBlockChainRPCWithRetry) BlockByHash(ctx context.Context, hash common.Hash) (block *types.Block, err error) {
+	for i := 0; i <= rpc.maxRetryTimes; i++ {
+		block, err = rpc.Client.BlockByHash(ctx, hash)
+		if err == nil {
+			break
+		} else {
+			time.Sleep(time.Duration(500*(i+1)) * time.Millisecond)
+		}
+	}
+
+	return
+}
+
 func (rpc EthBlockChainRPCWithRetry) TransactionReceipt(ctx context.Context, txHash common.Hash) (rst *types.Receipt, err error) {
 	for i := 0; i <= rpc.maxRetryTimes; i++ {
 		rst, err = rpc.Client.TransactionReceipt(ctx, txHash)
